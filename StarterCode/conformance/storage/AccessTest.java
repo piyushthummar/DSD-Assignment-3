@@ -291,6 +291,7 @@ public class AccessTest extends StorageTest
         }
         catch(Throwable t)
         {
+//        	System.out.println(t);
             throw new TestFailed("unable to append data to file", t);
         }
 
@@ -308,6 +309,8 @@ public class AccessTest extends StorageTest
         }
 
         if(size != write_data.length + 1 + write_data.length)
+//        	System.out.println(size);
+//        	System.out.println(write_data.length);
             throw new TestFailed("file has incorrect size after appending");
     }
 
@@ -418,12 +421,14 @@ public class AccessTest extends StorageTest
 
             if(result == null)
             {
+//            	System.out.println("result is null");
                 throw new TestFailed("read method returned null when reading " +
                                      "from empty file");
             }
 
             if(result.length != 0)
             {
+//            	System.out.println(result.length + " -> " + result.toString());
                 throw new TestFailed("read method returned incorrect number " +
                                      "of bytes when reading empty file");
             }
@@ -431,6 +436,7 @@ public class AccessTest extends StorageTest
         catch(TestFailed e) { throw e; }
         catch(Throwable t)
         {
+//        	System.out.println(t);
             throw new TestFailed("read method threw unexpected exception " +
                                  "when reading from empty file", t);
         }

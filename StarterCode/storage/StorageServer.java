@@ -2,6 +2,7 @@ package storage;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
 
 import common.*;
 import rmi.*;
@@ -125,17 +126,80 @@ public class StorageServer implements Storage, Command {
 	// The following methods are documented in Storage.java.
 	@Override
 	public synchronized long size(Path file) throws FileNotFoundException {
-		throw new UnsupportedOperationException("not implemented");
+		if(file == null) {
+			throw new NullPointerException("Given path is null");
+		}
+		File newFile = new File(this.root + file.path);
+		if(!newFile.exists()) {
+			throw new FileNotFoundException("File does not exists");
+		}
+		if(newFile.isDirectory()) {
+			throw new FileNotFoundException("Given path is a Directory not a file");
+		}
+		return newFile.length();
 	}
 
 	@Override
 	public synchronized byte[] read(Path file, long offset, int length) throws FileNotFoundException, IOException {
-		throw new UnsupportedOperationException("not implemented");
+		if(file == null) {
+			throw new NullPointerException("Given path is null");
+		}
+		File newFile = new File(this.root + file.path);
+		if(!newFile.exists()) {
+			throw new FileNotFoundException("File does not exists");
+		} 
+		if(newFile.isDirectory()) {
+			throw new FileNotFoundException("Given path is a Directory not a file");
+		}
+		if(offset < 0 || length < 0) {
+			throw new IndexOutOfBoundsException("offset or length is negative");
+		}
+		if(offset > newFile.length()) {
+			throw new IndexOutOfBoundsException("offset greater than or equal to file length");
+		}
+		if(length > newFile.length()) {
+			throw new IndexOutOfBoundsException("given length is greater than file size");
+		}
+		// reference :-> https://netjs.blogspot.com/2015/11/how-to-convert-file-to-byte-array-java.html
+		byte[] result = new byte[(int) newFile.length()];
+		
+		FileInputStream fileInputStream = new FileInputStream(newFile);
+		fileInputStream.read(result,(int) offset, length);
+		fileInputStream.close();
+		
+		return result;
 	}
 
 	@Override
 	public synchronized void write(Path file, long offset, byte[] data) throws FileNotFoundException, IOException {
-		throw new UnsupportedOperationException("not implemented");
+		if(file == null) {
+			throw new NullPointerException("Given path is null");
+		}
+		File newFile = new File(this.root + file.path);
+		if(!newFile.exists()) {
+			throw new FileNotFoundException("File does not exists");
+		}
+		if(newFile.isDirectory()) {
+			throw new FileNotFoundException("Given path is a Directory not a file");
+		}
+		if(data == null) {
+			throw new NullPointerException("Data to write is null");
+		}
+		if(offset < 0) {
+			throw new IndexOutOfBoundsException("offset is negative");
+		}
+		if(offset > 0) {
+			// reference :-> http://www.java2s.com/Tutorials/Java/IO_How_to/write/Append_byte_array_to_a_file.htm
+			FileOutputStream fileOutputStream = new FileOutputStream(newFile, true);
+			fileOutputStream.write(" ".getBytes()); //can be changed
+			fileOutputStream.write(data);
+			fileOutputStream.close();
+		} else {
+			FileOutputStream fileOutputStream = new FileOutputStream(newFile);
+			fileOutputStream.write(data,(int) offset, data.length);
+			fileOutputStream.close();
+		}
+		
 	}
 
 	// The following methods are documented in Command.java.
