@@ -34,14 +34,24 @@ public class NamingServer implements Service, Registration
 {
 	private Skeleton<Registration> registrationSkeleton;
 	private InetSocketAddress registrationAddress;
+	
+	//Note : Addresses for registration and service are given in NamingStubs.java
+	
+	private Skeleton<Service> serviceSkeleton;
+	private InetSocketAddress serviceAddress;
     /** Creates the naming server object.
         <p>
         The naming server is not started.
      */
     public NamingServer()
-    {
+    {  	
+    	//For Storage package Tests
         registrationAddress = new InetSocketAddress(6001);
         registrationSkeleton = new Skeleton<Registration>(Registration.class, this, registrationAddress);
+        
+        //For Naming Package Tests
+        serviceAddress = new InetSocketAddress(6000);
+        serviceSkeleton = new Skeleton<Service>(Service.class, this, serviceAddress);
     }
 
     public Skeleton<Registration> getRegistrationSkeleton() {
@@ -66,6 +76,7 @@ public class NamingServer implements Service, Registration
     public synchronized void start() throws RMIException
     {
         registrationSkeleton.start();
+        serviceSkeleton.start();
     }
 
     /** Stops the naming server.
@@ -80,6 +91,8 @@ public class NamingServer implements Service, Registration
     public void stop()
     {
         registrationSkeleton.stop();
+        serviceSkeleton.stop();
+        stopped(null);
     }
 
     /** Indicates that the server has completely shut down.
