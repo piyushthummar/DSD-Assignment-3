@@ -72,6 +72,13 @@ public class RegistrationTest extends StorageTest
 
         if(!TestUtil.sameElements(listed, remaining_files))
         {
+//        	for(Path item : listed) {
+//        		System.out.println(item.toString());
+//        	}
+//        	System.out.println("****************************************");
+//        	for(Path item : remaining_files) {
+//        		System.out.println(item.toString());
+//        	}
             throw new TestFailed("storage server did not remove correct " +
                                  "files after registration");
         }
