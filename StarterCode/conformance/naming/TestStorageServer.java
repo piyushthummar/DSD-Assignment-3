@@ -120,6 +120,13 @@ class TestStorageServer implements Storage, Command
         {
             if(!TestUtil.sameElements(delete_files, expect_files))
             {
+            	System.out.println("actual");
+            	for(Path item : delete_files) {
+            		System.out.println(item);
+            	}System.out.println("expected");
+            	for(Path item : expect_files) {
+            		System.out.println(item);
+            	}
                 throw new TestFailed("naming server did not command deletion " +
                                      "of the expected files");
             }

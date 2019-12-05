@@ -2,6 +2,10 @@ package naming;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import rmi.*;
 import common.*;
@@ -39,6 +43,10 @@ public class NamingServer implements Service, Registration
 	
 	private Skeleton<Service> serviceSkeleton;
 	private InetSocketAddress serviceAddress;
+	
+	//For Registration Test of NamingServer
+	ArrayList<LeafNode> leavesOfTree = new ArrayList<>();
+	
     /** Creates the naming server object.
         <p>
         The naming server is not started.
@@ -151,6 +159,70 @@ public class NamingServer implements Service, Registration
     public Path[] register(Storage client_stub, Command command_stub,
                            Path[] files)
     {
-        throw new UnsupportedOperationException("not implemented");
+        if(client_stub == null || command_stub == null) {
+        	throw new NullPointerException("client_stub or command_stub is null");
+        }
+        if(files == null) {
+        	throw new NullPointerException("File list is null");
+        }
+        
+        Set<Path> duplicateFiles = new HashSet<>();
+        for(Path item : files) {
+        	if(item.isRoot()) {
+        		return duplicateFiles.stream().toArray(Path[] :: new);
+        	}
+        }
+        
+        for(LeafNode leaf : leavesOfTree) {
+        	if(leaf.command.equals(command_stub) || leaf.storage.equals(client_stub)) {
+        		throw new IllegalStateException("leaf is present in tree");
+        	}
+        }
+      
+        //Checking for duplicate files
+        
+        for(LeafNode leafItem : leavesOfTree) {
+        	for(String pathItemOfLeaf : leafItem.storageFiles.keySet()) {
+        		for(Path pathItemFromInput : files) {
+        			//delete file if it is present in storageFileList of Leaf Node
+        			if(pathItemFromInput.toString().equals(pathItemOfLeaf)){
+        				duplicateFiles.add(pathItemFromInput);
+        			}
+        			if(pathItemOfLeaf.startsWith(pathItemFromInput.toString())) {
+        				duplicateFiles.add(pathItemFromInput);
+        			}
+        			if(pathItemFromInput.isRoot()) {
+        				return duplicateFiles.stream().toArray(Path[] :: new);
+        			}
+        		}
+        	}
+        }
+        
+        //remove the files that are duplicate in the list
+        List<Path> uniqueFiles = new ArrayList<>();
+        for(Path item : files) {
+        	uniqueFiles.add(item);
+        }
+        for(Path item : duplicateFiles) {
+        	uniqueFiles.remove(item);
+        }
+        
+        files = uniqueFiles.stream().toArray(Path[] :: new);
+        
+        //Create a new leaf with unique files
+        LeafNode leafNode = new LeafNode();
+        for(Path item : files) {
+        	leafNode.storageFiles.put(item.toString(), "File");
+        }
+        leafNode.command = command_stub;
+        leafNode.storage = client_stub;
+        leavesOfTree.add(leafNode);
+        
+        
+        // If duplicate files are found, return the list of files to delete from local storage
+        if(duplicateFiles.size() > 0) {
+        	return duplicateFiles.stream().toArray(Path[] :: new);
+        }
+        return null;
     }
 }
