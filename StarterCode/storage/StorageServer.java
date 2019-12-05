@@ -205,11 +205,54 @@ public class StorageServer implements Storage, Command {
 	// The following methods are documented in Command.java.
 	@Override
 	public synchronized boolean create(Path file) {
-		throw new UnsupportedOperationException("not implemented");
+		if(file == null) {
+			throw new NullPointerException();
+		}
+
+		File newFile = new File(this.root + file.path);
+		
+		if(file.isRoot()) {
+			return false;
+		}
+		if(newFile.exists()) {
+//			System.out.println(file.path+" - file exists" + newFile.getName());
+			return false;
+		}
+		boolean result = false;
+		try {
+			//reference :-> https://stackoverflow.com/questions/2833853/create-whole-path-automatically-when-writing-to-a-new-file
+			newFile.getParentFile().mkdirs();
+			result = newFile.createNewFile();
+		} catch (IOException e) {
+			result = false;
+		}
+		return result;
 	}
 
 	@Override
 	public synchronized boolean delete(Path path) {
-		throw new UnsupportedOperationException("not implemented");
+		if(path == null) {
+			throw new NullPointerException("Given path is null");
+		}
+		if(path.isRoot()) {
+			return false;
+		}
+		File newFile = new File(this.root + path.path);
+		if(!newFile.exists()) {
+			return false;
+		}
+		boolean result = false;
+		if(newFile.isDirectory()) {
+			try {
+				// reference :-> https://stackoverflow.com/questions/20281835/how-to-delete-a-folder-with-files-using-java
+				FileUtils.deleteDirectory(newFile);
+				result = true;
+			} catch (IOException e) {
+				result = false;
+			}
+		} else {
+			result = newFile.delete();
+		}
+		return result;
 	}
 }
