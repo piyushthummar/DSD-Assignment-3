@@ -120,15 +120,96 @@ public class NamingServer implements Service, Registration
     @Override
     public boolean isDirectory(Path path) throws FileNotFoundException
     {
-        throw new UnsupportedOperationException("not implemented");
+        if(path == null) {
+        	throw new NullPointerException("Given path is null");
+        }
+        if(!doesPathExistsOnNamingServer(path)) {
+        	throw new FileNotFoundException("Given directory does not exist");
+        }
+        for(LeafNode leafNode : leavesOfTree) {
+        	for(String itemOfStorageFile : leafNode.storageFiles.keySet()) {
+        		if(itemOfStorageFile.equals(path.toString())) {
+        			if(leafNode.storageFiles.get(itemOfStorageFile).equals("File")) {
+        				return false;
+        			} else {
+        				return true;
+        			}
+        		}
+        		if(itemOfStorageFile.startsWith(path.toString())) {
+        			if(path.isRoot()) {
+        				return true;
+        			}
+        			
+        			String subString = itemOfStorageFile.substring(path.toString().length());
+        			if(subString.charAt(0) == '/') {
+        				return true;
+        			}
+        		}
+        	}
+        }
+
+        return true;
     }
 
     @Override
     public String[] list(Path directory) throws FileNotFoundException
     {
-        throw new UnsupportedOperationException("not implemented");
+    	if(directory == null) {
+        	throw new NullPointerException("Given path is null");
+        }
+//    	File newFile =  new File(directory.path);
+//        if(!newFile.exists()) {
+//        	throw new FileNotFoundException("File is not found in given path");
+//        }
+//        if(newFile.isFile()) {
+//        	throw new FileNotFoundException("Given path is of file not directory to list files");
+//        }
+        if(!doesPathExistsOnNamingServer(directory)) {
+        	throw new FileNotFoundException("Given directory does not exist");
+        }
+    	
+        Set<String> listOfFilesToReturn = new HashSet();
+        for(LeafNode leafNode : leavesOfTree) {
+        	for(String itemOfStorageFile : leafNode.storageFiles.keySet()) {
+        		if(itemOfStorageFile.equals(directory.toString())) {
+        			//Given directory itself is in the list of files resides in leafNode
+        			throw new FileNotFoundException();
+        		}
+        		if(itemOfStorageFile.startsWith(directory.toString())) {
+        			if(directory.isRoot()) {
+        				// if directory is root, add all paths of file and directory after root
+        				String[] split = itemOfStorageFile.split("/");
+        				listOfFilesToReturn.add(split[1]);
+        				continue;
+        			}
+        			String subString = itemOfStorageFile.substring(directory.toString().length());
+        			if(subString.charAt(0) == '/') {
+        				//add files after the path of directory is given
+        				listOfFilesToReturn.add(subString.substring(1));
+        			}
+        		}
+        	}
+        }
+        if(listOfFilesToReturn.size() == 0) {
+        	throw new FileNotFoundException("No list for given directory");
+        }
+        return listOfFilesToReturn.stream().toArray(String[] :: new);
     }
 
+    private boolean doesPathExistsOnNamingServer(Path path) {
+    	if(path.isRoot()) {
+    		return true;
+    	}
+    	for(LeafNode leafNode : leavesOfTree) {
+    		for(String itemFromStorageFiles : leafNode.storageFiles.keySet()) {
+    			if(itemFromStorageFiles.startsWith(path.toString())) {
+    				return true;
+    			}
+    		}
+    	}
+    	return false;
+    }
+    
     @Override
     public boolean createFile(Path file)
         throws RMIException, FileNotFoundException

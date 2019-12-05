@@ -85,6 +85,10 @@ public class ListingTest extends NamingTest
         }
         catch(Throwable t)
         {
+//        	System.out.println(path.toString());
+//        	for(String item : listing) {
+//        		System.out.println(item);
+//        	}
             throw new TestFailed("unable to list directory " + path, t);
         }
 
@@ -115,6 +119,8 @@ public class ListingTest extends NamingTest
             }
             catch(Throwable t)
             {
+//            	System.out.println(t);
+//            	System.out.println(child_path.toString());
                 throw new TestFailed("unable to determine if " + child_path +
                                      " is a directory", t);
             }
