@@ -157,13 +157,7 @@ public class NamingServer implements Service, Registration
     	if(directory == null) {
         	throw new NullPointerException("Given path is null");
         }
-//    	File newFile =  new File(directory.path);
-//        if(!newFile.exists()) {
-//        	throw new FileNotFoundException("File is not found in given path");
-//        }
-//        if(newFile.isFile()) {
-//        	throw new FileNotFoundException("Given path is of file not directory to list files");
-//        }
+
         if(!doesPathExistsOnNamingServer(directory)) {
         	throw new FileNotFoundException("Given directory does not exist");
         }
@@ -214,15 +208,129 @@ public class NamingServer implements Service, Registration
     public boolean createFile(Path file)
         throws RMIException, FileNotFoundException
     {
-        throw new UnsupportedOperationException("not implemented");
+        if(file == null) {
+        	throw new NullPointerException("Given path is null to create file");
+        }
+        if(file.isRoot()) {
+    		return false;
+    	}
+        if(!doesPathExistsOnNamingServer(file.parent())){
+    		throw new FileNotFoundException("parent path does not exist");
+    	}
+        if(doesPathExistsOnNamingServer(file)){
+    		return false;
+    	}
+        if(!parentDirectoryIsDirectory(file)) {
+    		throw new FileNotFoundException("parent path contains a file name not a directory");
+    	}
+        
+        boolean fileCreation = false;
+        try {
+        	boolean diectoryExists = isDirectory(file);
+        	if(diectoryExists) {
+            	return false;
+            }
+        }catch(FileNotFoundException e) {
+        	fileCreation = true;
+        }
+        if(fileCreation) {
+        	for(LeafNode leafNode : leavesOfTree) {
+        		for(String itemFromStorageFiles : leafNode.storageFiles.keySet()) {
+        			if(itemFromStorageFiles.startsWith(file.parent().toString())) {
+        				if(leafNode.command.create(file)) {
+        					leafNode.storageFiles.put(file.toString(), "File");
+        				}
+        			}
+        		}
+        	}
+        }
+        return fileCreation;
     }
 
+    private boolean doesFileExist(Path file) {
+    	for(LeafNode leafNode : leavesOfTree) {
+    		for(String itemFromStorageFiles : leafNode.storageFiles.keySet()) {
+    			if(itemFromStorageFiles.equals(file.toString())) {
+    				return true;
+    			}
+    		}
+    	}
+    	return false;
+    }
+    
     @Override
     public boolean createDirectory(Path directory) throws FileNotFoundException
     {
-        throw new UnsupportedOperationException("not implemented");
-    }
+    	if(directory == null) {
+        	throw new NullPointerException("Given path is null to create directory");
+        }
+    	if(directory.isRoot()) {
+    		return false;
+    	}
+    	if(doesPathExistsOnNamingServer(directory)) {
+    		return false;
+    	}
+    	if(!doesPathExistsOnNamingServer(directory.parent())){
+    		throw new FileNotFoundException("parent path does not exist");
+    	}
+    	if(!parentDirectoryIsDirectory(directory)) {
+    		throw new FileNotFoundException("parent path contains a file name not a directory");
+    	}
+    	boolean directoryCreation = false;
+    	try {
+    		boolean doesDirectoryExist = isDirectory(directory);
+    		if(doesDirectoryExist) {
+        		return false;
+        	}
+    	} catch(FileNotFoundException e) {
+    		directoryCreation = true;
+    	}
 
+    	if(directoryCreation) {
+    		for(LeafNode leafNode : leavesOfTree) {
+        		for(String itemFromStorageFiles : leafNode.storageFiles.keySet()) {
+        			if(itemFromStorageFiles.startsWith(directory.parent().toString())) {
+        				leafNode.storageFiles.put(directory.toString(), "Directory");
+        				directoryCreation = true;
+        			}
+        		}
+        	}
+    	}
+    	
+    	return directoryCreation;
+    }
+    
+//    private boolean doesDirectoryOrFileExists(Path directory) {
+//    	for(LeafNode leafNode : leavesOfTree) {
+//    		for(String itemFromStorageFiles : leafNode.storageFiles.keySet()) {
+//    			if(itemFromStorageFiles.equals(directory.toString())) {
+//    				return true;
+//    			}
+//    		}
+//    	}
+//    	return false;
+//    }
+//    private boolean doesParentDirectoryExists(Path directory) {
+//    	if(doesPathExistsOnNamingServer(directory.parent())) {
+//    		return true;
+//    	} else {
+//    		return false;
+//    	}
+//    }
+
+    private boolean parentDirectoryIsDirectory(Path directory) {
+    	boolean result = false;
+    	try {
+			if(isDirectory(directory.parent())) {	
+				result = true;
+			} else {
+				result = false;
+			}
+		} catch (FileNotFoundException e) {
+			result = false;
+		}
+    	return result;
+    }
     @Override
     public boolean delete(Path path) throws FileNotFoundException
     {
