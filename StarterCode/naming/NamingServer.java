@@ -247,16 +247,16 @@ public class NamingServer implements Service, Registration
         return fileCreation;
     }
 
-    private boolean doesFileExist(Path file) {
-    	for(LeafNode leafNode : leavesOfTree) {
-    		for(String itemFromStorageFiles : leafNode.storageFiles.keySet()) {
-    			if(itemFromStorageFiles.equals(file.toString())) {
-    				return true;
-    			}
-    		}
-    	}
-    	return false;
-    }
+//    private boolean doesFileExist(Path file) {
+//    	for(LeafNode leafNode : leavesOfTree) {
+//    		for(String itemFromStorageFiles : leafNode.storageFiles.keySet()) {
+//    			if(itemFromStorageFiles.equals(file.toString())) {
+//    				return true;
+//    			}
+//    		}
+//    	}
+//    	return false;
+//    }
     
     @Override
     public boolean createDirectory(Path directory) throws FileNotFoundException
@@ -340,7 +340,23 @@ public class NamingServer implements Service, Registration
     @Override
     public Storage getStorage(Path file) throws FileNotFoundException
     {
-        throw new UnsupportedOperationException("not implemented");
+        if(file == null) {
+        	throw new NullPointerException();
+        }
+        if(!doesPathExistsOnNamingServer(file)) {
+        	throw new FileNotFoundException("File does not exist");
+        }
+        if(isDirectory(file)) {
+        	throw new FileNotFoundException("Given file is Directory");
+        }
+        for(LeafNode leafNode : leavesOfTree) {
+        	for(String itemForStorageFiles : leafNode.storageFiles.keySet()) {
+        		if(itemForStorageFiles.equals(file.toString())) {
+        			return leafNode.storage;
+        		}
+        	}
+        }
+        return null;
     }
 
     // The method register is documented in Registration.java.
